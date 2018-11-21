@@ -12,6 +12,8 @@
     "base-64": "^0.1.0",
     "node-fetch": "^2.3.0",
     "request": "^2.88.0",
-    "slackbots": "^1.2.0"
+    "slackbots": "^1.2.0",
+    "express": "^4.16.4",
+    "body-parser": "^1.18.3"
   }
 }
