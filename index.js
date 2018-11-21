@@ -1,64 +1,67 @@
 var SlackBot = require("slackbots")
+var base64 = require("base-64")
+var fetch = require("node-fetch")
+
 var tocco_token = require("./token")
 
-var channel = "general"
-var link = 'https://www.tocco.ch/nice2/rest/entities/Task/70368'
+var stringToEncode = tocco_token.username + ':' + tocco_token.password
 
-var bot = new SlackBot({
-  token: tocco_token.token,
-  name: "tocco_slackbot"
-})
+var username = tocco_token.username
+console.log('username', username)
+var password = tocco_token.password
 
-bot.on("start", function() {
-  bot.postMessageToChannel(channel, "Hello Theo this is the slackbot by cykh", input);
-  console.log("Hello world!");
-})
+var fetchTaskURL = 'https://www.tocco.ch/nice2/rest/entities/Task?_where=task_nr==67093&paths_=!'
 
-var input = {
-  "text": "Now back in stock!:tada:",
-  "attachments": [
-    {
-      "title": "The Further Adventures of Slackbot",
-      "fields": [
-        {
-          "title": "Volume",
-          "value": "www.tocco/id.com",
-          "short": true
-        },
-        {
-          "title": "Issue",
-          "value": "3",
-          "short": true
-        }
-      ],
-      "author_name": "Stanford S. Strickland",
-      "author_icon": "http://a.slack-edge.com/7f18https://a.slack-edge.com/bfaba/img/api/homepage_custom_integrations-2x.png",
-      "image_url": "http://i.imgur.com/OJkaVOI.jpg?1"
-    },
-    {
-      "title": "Synopsis",
-      "text": "After @episod pushed exciting changes to a devious new branch back in Issue 1, Slackbot notifies @don about an unexpected deploy..."
-    },
-    {
-      "fallback": "Would you recommend it to customers?",
-      "title": "Would you recommend it to customers?",
-      "callback_id": "comic_1234_xyz",
-      "color": "#3AA3E3",
-      "attachment_type": "default",
-      "actions": [
-        {
-          "name": "recommend",
-          "text": "Recommend",
-          "type": "button",
-          "value": "recommend"
-        },
-        {
-          "name": "no",
-          "text": "No",
-          "type": "button",
-          "value": "bad"
-        }
-      ]
+
+let sessionId = null;
+const transformResponse = (response) => {
+  console.log('response', response.data[0].display)
+  response.data[0].display
+  // const labels = response.data.map(
+  //   installation => installation.fields.instance.value,
+  //   );
+  //
+  // if (labels.length === 0) {
+  //   return null;
+  // }
+  //
+  // return {
+  //   title: label,
+  //   type: 'labelList',
+  //   data: labels,
+  // };
+};
+
+const extractAndStoreSessionId = response => {
+  const cookie = response.headers.get('set-cookie');
+  if (cookie) {
+    const match = cookie.match(/nice_auth=([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/);
+    if (match && match[1]) {
+      sessionId = match[1];
     }
-  ]
-}
+  }
+  return response;
+};
+
+ function getPromise (username, password) {
+  const headers = {
+    Accept: 'application/json',
+    Authorization: `Basic ${base64.encode(`${username}:${password}`)}`,
+  };
+  console.log('headers', headers)
+  if (sessionId) {
+    headers.cookie = 'nice_auth=' + sessionId;
+  }
+  return fetch(fetchTaskURL, { method: 'GET', headers })
+    .then(response => extractAndStoreSessionId(response))
+    .then(response => response.json())
+    .then(response =>
+       transformResponse(response)
+  )
+    .catch(error =>
+    // logError('backofficeAdapter', 'labelList', error, apiConfig),
+   console.log('error', error)
+    );
+ }
+
+getPromise(username, password)

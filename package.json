@@ -9,6 +9,9 @@
   "author": "cykh/thsp",
   "license": "ISC",
   "dependencies": {
+    "base-64": "^0.1.0",
+    "node-fetch": "^2.3.0",
+    "request": "^2.88.0",
     "slackbots": "^1.2.0"
   }
 }
